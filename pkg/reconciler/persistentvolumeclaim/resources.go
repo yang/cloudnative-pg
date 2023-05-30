@@ -29,9 +29,13 @@ import (
 // GetName builds the name for a given PVC of the instance
 func GetName(instanceName string, role utils.PVCRole) string {
 	pvcName := instanceName
-	if role == utils.PVCRolePgWal {
+	switch role {
+	case utils.PVCRolePgWal:
 		pvcName += apiv1.WalArchiveVolumeSuffix
+	case utils.PVCRoleImport:
+		pvcName += apiv1.ImportVolumeSuffix
 	}
+
 	return pvcName
 }
 

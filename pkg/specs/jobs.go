@@ -285,7 +285,7 @@ func createPrimaryJob(cluster apiv1.Cluster, nodeSerial int, role jobRole, initC
 							SecurityContext: CreateContainerSecurityContext(cluster.GetSeccompProfile()),
 						},
 					},
-					Volumes: createPostgresVolumes(cluster, instanceName),
+					Volumes: createPostgresVolumes(cluster, instanceName, true),
 					SecurityContext: CreatePodSecurityContext(
 						cluster.GetSeccompProfile(),
 						cluster.GetPostgresUID(),

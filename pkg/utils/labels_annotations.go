@@ -101,6 +101,8 @@ const (
 	PVCRolePgData PVCRole = "PG_DATA"
 	// PVCRolePgWal is a PVC used for storing PG_WAL
 	PVCRolePgWal PVCRole = "PG_WAL"
+	// PVCRoleImport is a PVC used to store the first import
+	PVCRoleImport PVCRole = "PG_IMPORT"
 )
 
 // LabelClusterName labels the object with the cluster name
