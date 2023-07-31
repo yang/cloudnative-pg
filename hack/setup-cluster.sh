@@ -25,8 +25,10 @@ fi
 
 # Defaults
 K8S_DEFAULT_VERSION=v1.27.3
+CSI_DRIVER_HOST_PATH_DEFAULT_VERSION=v1.11.0
 K8S_VERSION=${K8S_VERSION:-$K8S_DEFAULT_VERSION}
 KUBECTL_VERSION=${KUBECTL_VERSION:-$K8S_VERSION}
+CSI_DRIVER_HOST_PATH_VERSION=${CSI_DRIVER_HOST_PATH_VERSION:-$CSI_DRIVER_HOST_PATH_DEFAULT_VERSION}
 ENGINE=${CLUSTER_ENGINE:-kind}
 ENABLE_REGISTRY=${ENABLE_REGISTRY:-}
 ENABLE_PYROSCOPE=${ENABLE_PYROSCOPE:-}
@@ -37,8 +39,9 @@ ROOT_DIR=$(cd "$(dirname "$0")/../"; pwd)
 HACK_DIR="${ROOT_DIR}/hack"
 E2E_DIR="${HACK_DIR}/e2e"
 TEMP_DIR="$(mktemp -d)"
+echo $TEMP_DIR
 LOG_DIR=${LOG_DIR:-$ROOT_DIR/_logs/}
-trap 'rm -fr ${TEMP_DIR}' EXIT
+#trap 'rm -fr ${TEMP_DIR}' EXIT
 
 # Operating System and Architecture
 OS=$(uname | tr '[:upper:]' '[:lower:]')
@@ -333,6 +336,46 @@ deploy_fluentd() {
   done
 }
 
+deploy_csi_host_path() {
+
+  CSI_BASE_URL=https://raw.githubusercontent.com/kubernetes-csi
+  EXTERNAL_SNAPSHOTTER_VERSION="v6.2.2"
+  EXTERNAL_PROVISIONER_VERSION="v3.3.0"
+  EXTERNAL_RESIZER_VERSION="v1.6.0"
+  EXTERNAL_ATTACHER_VERSION="v4.0.0"
+
+  ## Install external snapshotter CRD
+  kubectl apply -f "${CSI_BASE_URL}"/external-snapshotter/"${EXTERNAL_SNAPSHOTTER_VERSION}"/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+  kubectl apply -f "${CSI_BASE_URL}"/external-snapshotter/"${EXTERNAL_SNAPSHOTTER_VERSION}"/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+  kubectl apply -f "${CSI_BASE_URL}"/external-snapshotter/"${EXTERNAL_SNAPSHOTTER_VERSION}"/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+  kubectl apply -f "${CSI_BASE_URL}"/external-snapshotter/"${EXTERNAL_SNAPSHOTTER_VERSION}"/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
+  kubectl apply -f "${CSI_BASE_URL}"/external-snapshotter/"${EXTERNAL_SNAPSHOTTER_VERSION}"/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+  kubectl apply -f "${CSI_BASE_URL}"/external-snapshotter/"${EXTERNAL_SNAPSHOTTER_VERSION}"/deploy/kubernetes/csi-snapshotter/rbac-csi-snapshotter.yaml
+
+  ## Install external provisioner
+  kubectl apply -f "${CSI_BASE_URL}"/external-provisioner/"${EXTERNAL_PROVISIONER_VERSION}"/deploy/kubernetes/rbac.yaml
+
+  ## Install external attacher
+  kubectl apply -f "${CSI_BASE_URL}"/external-attacher/"${EXTERNAL_ATTACHER_VERSION}"/deploy/kubernetes/rbac.yaml
+
+  ## Install external resizer
+  kubectl apply -f "${CSI_BASE_URL}"/external-resizer/"${EXTERNAL_RESIZER_VERSION}"/deploy/kubernetes/rbac.yaml
+
+  ## Install driver and plugin
+  kubectl apply -f "${CSI_BASE_URL}"/csi-driver-host-path/"${CSI_DRIVER_HOST_PATH_VERSION}"/deploy/kubernetes-1.24/hostpath/csi-hostpath-driverinfo.yaml
+  kubectl apply -f "${CSI_BASE_URL}"/csi-driver-host-path/"${CSI_DRIVER_HOST_PATH_VERSION}"/deploy/kubernetes-1.24/hostpath/csi-hostpath-plugin.yaml
+
+  ## create volumesnapshotclass
+  kubectl apply -f "${CSI_BASE_URL}"/csi-driver-host-path/"${CSI_DRIVER_HOST_PATH_VERSION}"/deploy/kubernetes-1.24/hostpath/csi-hostpath-snapshotclass.yaml
+
+  ## create storage class
+  kubectl apply -f "${CSI_BASE_URL}"/csi-driver-host-path/"${CSI_DRIVER_HOST_PATH_VERSION}"/examples/csi-storageclass.yaml
+
+
+
+}
+
+
 deploy_pyroscope() {
   helm repo add pyroscope-io https://pyroscope-io.github.io/helm-chart
 
@@ -539,6 +582,12 @@ pyroscope() {
   echo "${bright} Done deploying Pyroscope${reset}"
 }
 
+csi_driver() {
+  echo "${bright} Deploying csi driver plugin ${reset}"
+  deploy_csi_host_path
+  echo "${bright} Deploying csi driver plugin ${reset}"
+}
+
 ##
 ## MAIN
 ##
@@ -623,7 +672,7 @@ main() {
       prepare "${dest_dir}"
       ;;
 
-    create | load | load-helper-images | deploy | print-image | export-logs | destroy | pyroscope)
+    create | load | load-helper-images | deploy | print-image | export-logs | destroy | pyroscope | csi_driver)
       ensure_registry
       "${command//-/_}"
       ;;
