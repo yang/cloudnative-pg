@@ -117,35 +117,6 @@ spec:
     value of this parameter for your environment. It will certainly make a
     difference **when** (not if) you'll need it.
 
-## Recovery from a `Backup` object
-
-In case a Backup resource is already available in the namespace in which the
-cluster should be created, you can specify its name through
-`.spec.bootstrap.recovery.backup.name`, as in the following example:
-
-```yaml
-apiVersion: postgresql.cnpg.io/v1
-kind: Cluster
-metadata:
-  name: cluster-example-initdb
-spec:
-  instances: 3
-
-  superuserSecret:
-    name: superuser-secret
-
-  bootstrap:
-    recovery:
-      backup:
-        name: backup-example
-
-  storage:
-    size: 1Gi
-```
-
-This bootstrap method allows you to specify just a reference to the
-backup that needs to be restored.
-
 ## Recovery from `VolumeSnapshot` objects
 
 CloudNativePG can create a new cluster from a `VolumeSnapshot` of a PVC of an
@@ -204,10 +175,39 @@ replica through a technique known as *cold backup*, by fencing the standby
 before taking a physical copy of the volumes. For details, please refer to
 ["Snapshotting a Postgres cluster"](#snapshotting-a-postgres-cluster).
 
+## Recovery from a `Backup` object
+
+In case a Backup resource is already available in the namespace in which the
+cluster should be created, you can specify its name through
+`.spec.bootstrap.recovery.backup.name`, as in the following example:
+
+```yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cluster-example-initdb
+spec:
+  instances: 3
+
+  superuserSecret:
+    name: superuser-secret
+
+  bootstrap:
+    recovery:
+      backup:
+        name: backup-example
+
+  storage:
+    size: 1Gi
+```
+
+This bootstrap method allows you to specify just a reference to the
+backup that needs to be restored.
+
 ## Additional considerations
 
-Whether you recover from a recovery object store or an existing `Backup`
-resource, the following considerations apply:
+Whether you recover from a recovery object store, a volume snapshot, or an
+existing `Backup` resource, the following considerations apply:
 
 - The application database name and the application database user are preserved
 from the backup that is being restored. The operator does not currently attempt
@@ -305,7 +305,6 @@ base backup for the recovery as follows:
 
 ### PITR from `VolumeSnapshot` Objects
 
-
 - a Kubernetes volume snapshot for the `PGDATA` containing the base backup from
   which to start the recovery process, identified in the
   `recovery.volumeSnapshots` section and called `test-snapshot-1`
@@ -344,6 +343,12 @@ spec:
             name: minio
             key: ACCESS_SECRET_KEY
 ```
+
+!!! Note
+    In case the backed up Cluster had `walStorage` enabled, you also must
+    specify the volume snapshot containing the `PGWAL` directory, as mentioned
+    in the [Recovery from VolumeSnapshot objects](#recovery-from-volumeSnapshot-objects)
+    section.
 
 !!! Warning
     It is your responsibility to ensure that the end time of the base backup in

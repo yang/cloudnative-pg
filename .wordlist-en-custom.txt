@@ -990,6 +990,7 @@ virtualxid
 volumeMode
 volumeMounts
 volumeSnapshotTemplate
+volumeSnapshot
 volumesnapshot
 wal
 walSegmentSize
