@@ -31,4 +31,5 @@ This list is sorted in chronological order, based on the submission date.
 | [Opencell](https://opencellsoft.com/) | @AntoineMicheaOpencell | 2023-02-27 | Opencell is an open source agile monetization platform that uses CloudNativePG to run PostgreSQL clusters for its SaaS. |
 | [Clastix](https://clastix.io/) | @prometherion | 2023-03-14 | Used as an available [`DataStore` driver](https://kamaji.clastix.io/guides/postgresql-datastore/) for [Kamaji](https://github.com/clastix/kamaji) `TenantControlPlane` resources, also known as Kubernetes Control Planes running as regular pods in a management cluster to offer Kubernetes as a Service as a Cloud hyper-scaler. |
 | [Tembo](https://tembo.io/) | @tembo-io | 2023-07-17 | Tembo is the developer platform for PostgreSQL extensions. Build and share extensions with [Trunk](https://pgt.dev), and use any extension on Tembo Cloud. |
+| [Plasmic](https://plasmic.app) | @plasmicops | 2023-08-18 | Plasmic is a low-code development platform to let anyone build applications fast. It removes the limits associated with low-code by integrating with existing codebases. |
 
